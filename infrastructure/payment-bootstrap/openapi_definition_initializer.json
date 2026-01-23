@@ -1,0 +1,103 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Payment API",
+    "description": "API Gateway setup for integrating with AWS Lambda functions for initiating and finalizing payments.",
+    "version": "1.0"
+  },
+  "paths": {
+    "/payments": {
+      "options": {
+        "summary": "CORS support for initiate payment",
+        "description": "Handles preflight requests for CORS on initiate payment endpoint.",
+        "responses": {
+          "200": {
+            "description": "CORS support response",
+            "headers": {
+              "Access-Control-Allow-Origin": {
+                "description": "Specifies the allowed origin for CORS.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Access-Control-Allow-Methods": {
+                "description": "Specifies the allowed HTTP methods.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Access-Control-Allow-Headers": {
+                "description": "Specifies the allowed HTTP headers.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "mock",
+          "requestTemplates": {
+            "application/json": "{\"statusCode\": 200}"
+          },
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'POST,OPTIONS'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,traceparent'"
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Initiate a payment",
+        "description": "Handles a POST request to initiate a payment and invokes Lambda 1.",
+        "responses": {
+          "202": {
+            "description": "Payment initiated successfully (Accepted).",
+            "headers": {
+              "Access-Control-Allow-Origin": {
+                "description": "Specifies the allowed origin for CORS.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Access-Control-Allow-Methods": {
+                "description": "Specifies the allowed HTTP methods.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Access-Control-Allow-Headers": {
+                "description": "Specifies the allowed HTTP headers.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "example": {
+                    "message": "Payment event initiated",
+                    "statusCode": 202
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "payloadFormatVersion": "2.0",
+          "uri": "arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations"
+        }
+      }
+    }
+  }
+}

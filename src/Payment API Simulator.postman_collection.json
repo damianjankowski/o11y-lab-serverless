@@ -1,0 +1,769 @@
+{
+	"info": {
+		"_postman_id": "be4b1f45-660d-463b-87fd-4f4c9e581654",
+		"name": "Payment API Simulator",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "9922623"
+	},
+	"item": [
+		{
+			"name": "Success (No Simulation)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"function randomHex(bytes) {",
+							"  let s = '';",
+							"  for (let i = 0; i < bytes; i++) {",
+							"    s += ('00' + Math.floor(Math.random()*256).toString(16)).slice(-2);",
+							"  }",
+							"  return s;",
+							"}",
+							"function randomString(length) {",
+							"  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';",
+							"  let result = '';",
+							"  for (let i = 0; i < length; i++) {",
+							"    result += chars.charAt(Math.floor(Math.random() * chars.length));",
+							"  }",
+							"  return result;",
+							"}",
+							"function randomAmount(min, max) {",
+							"  const amount = (Math.random() * (max - min) + min).toFixed(2);",
+							"  return amount.toString();",
+							"}",
+							"",
+							"// Generate trace context",
+							"const traceId = randomHex(16);",
+							"const spanId = randomHex(8);",
+							"pm.variables.set('traceparent', `00-${traceId}-${spanId}-01`);",
+							"",
+							"// Generate payment data",
+							"const checkoutId = `chk-${randomString(4)}-${randomString(4)}-${randomString(4)}`;",
+							"const buyerId = `buyer-${randomString(8)}`;",
+							"const buyerEmail = `customer-${randomString(6)}@example.com`;",
+							"const paymentToken = `tok_${randomHex(8)}${randomString(12)}`;",
+							"",
+							"// Predefined seller accounts (only 10)",
+							"const sellerAccounts = [",
+							"  'seller-acct-001',",
+							"  'seller-acct-002',",
+							"  'seller-acct-003',",
+							"  'seller-acct-004',",
+							"  'seller-acct-005',",
+							"  'seller-acct-006',",
+							"  'seller-acct-007',",
+							"  'seller-acct-008',",
+							"  'seller-acct-009',",
+							"  'seller-acct-010'",
+							"];",
+							"",
+							"// Generate payment orders (1-3 random orders)",
+							"const numOrders = Math.floor(Math.random() * 3) + 1;",
+							"const paymentOrders = [];",
+							"for (let i = 0; i < numOrders; i++) {",
+							"  const randomSellerIndex = Math.floor(Math.random() * sellerAccounts.length);",
+							"  paymentOrders.push({",
+							"    seller_account: sellerAccounts[randomSellerIndex],",
+							"    amount: randomAmount(10, 10000),",
+							"    currency: 'USD',",
+							"    payment_order_id: `po-${randomString(4)}-${randomString(4)}-${randomString(4)}`",
+							"  });",
+							"}",
+							"",
+							"pm.variables.set('checkout_id', checkoutId);",
+							"pm.variables.set('buyer_id', buyerId);",
+							"pm.variables.set('buyer_email', buyerEmail);",
+							"pm.variables.set('payment_token', paymentToken);",
+							"pm.variables.set('payment_orders', JSON.stringify(paymentOrders));"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "traceparent",
+						"value": "{{traceparent}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"checkout_id\": \"{{checkout_id}}\",\n  \"buyer_info\": {\n    \"user_id\": \"{{buyer_id}}\",\n    \"email\": \"{{buyer_email}}\"\n  },\n  \"credit_card_info\": {\n    \"payment_token\": \"{{payment_token}}\"\n  },\n  \"payment_orders\": {{payment_orders}}\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/v1/payments",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"v1",
+						"payments"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Validation Error (Initializer)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"function randomString(length) {",
+							"  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';",
+							"  let result = '';",
+							"  for (let i = 0; i < length; i++) {",
+							"    result += chars.charAt(Math.floor(Math.random() * chars.length));",
+							"  }",
+							"  return result;",
+							"}",
+							"",
+							"const checkoutId = `chk-${randomString(4)}-${randomString(4)}-${randomString(4)}`;",
+							"const buyerId = `buyer-${randomString(8)}`;",
+							"const buyerEmail = `customer-${randomString(6)}@example.com`;",
+							"const paymentToken = `tok_${randomString(20)}`;",
+							"",
+							"pm.variables.set('checkout_id', checkoutId);",
+							"pm.variables.set('buyer_id', buyerId);",
+							"pm.variables.set('buyer_email', buyerEmail);",
+							"pm.variables.set('payment_token', paymentToken);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"checkout_id\": \"{{checkout_id}}\",\n  \"buyer_info\": {\n    \"user_id\": \"{{buyer_id}}\",\n    \"email\": \"{{buyer_email}}\"\n  },\n  \"credit_card_info\": {\n    \"payment_token\": \"{{payment_token}}\"\n  },\n  \"payment_orders\": [\n    {\n      \"seller_account\": \"seller-acct-123\",\n      \"amount\": \"0a\",\n      \"currency\": \"USD\",\n      \"payment_order_id\": \"po-invalid-amount\"\n    }\n  ]\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/v1/payments",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"v1",
+						"payments"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Error (Initializer)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"function randomString(length) {",
+							"  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';",
+							"  let result = '';",
+							"  for (let i = 0; i < length; i++) {",
+							"    result += chars.charAt(Math.floor(Math.random() * chars.length));",
+							"  }",
+							"  return result;",
+							"}",
+							"function randomAmount(min, max) {",
+							"  const amount = (Math.random() * (max - min) + min).toFixed(2);",
+							"  return amount.toString();",
+							"}",
+							"",
+							"const sellerAccounts = ['seller-acct-001','seller-acct-002','seller-acct-003','seller-acct-004','seller-acct-005','seller-acct-006','seller-acct-007','seller-acct-008','seller-acct-009','seller-acct-010'];",
+							"",
+							"const checkoutId = `chk-${randomString(4)}-${randomString(4)}-${randomString(4)}`;",
+							"const buyerId = `buyer-${randomString(8)}`;",
+							"const buyerEmail = `customer-${randomString(6)}@example.com`;",
+							"const paymentToken = `tok_${randomString(20)}`;",
+							"",
+							"const randomSellerIndex = Math.floor(Math.random() * sellerAccounts.length);",
+							"const paymentOrders = [{",
+							"  seller_account: sellerAccounts[randomSellerIndex],",
+							"  amount: randomAmount(10, 100),",
+							"  currency: 'USD',",
+							"  payment_order_id: `po-${randomString(4)}-${randomString(4)}-${randomString(4)}`",
+							"}];",
+							"",
+							"pm.variables.set('checkout_id', checkoutId);",
+							"pm.variables.set('buyer_id', buyerId);",
+							"pm.variables.set('buyer_email', buyerEmail);",
+							"pm.variables.set('payment_token', paymentToken);",
+							"pm.variables.set('payment_orders', JSON.stringify(paymentOrders));"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"checkout_id\": \"{{checkout_id}}\",\n  \"buyer_info\": {\n    \"user_id\": \"{{buyer_id}}\",\n    \"email\": \"{{buyer_email}}\"\n  },\n  \"credit_card_info\": {\n    \"payment_token\": \"{{payment_token}}\"\n  },\n  \"payment_orders\": {{payment_orders}},\n  \"simulate\": {\n    \"initializer\": {\n      \"error\": true\n    }\n  }\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/v1/payments",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"v1",
+						"payments"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Error (Executor)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"function randomString(length) {",
+							"  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';",
+							"  let result = '';",
+							"  for (let i = 0; i < length; i++) {",
+							"    result += chars.charAt(Math.floor(Math.random() * chars.length));",
+							"  }",
+							"  return result;",
+							"}",
+							"function randomAmount(min, max) {",
+							"  const amount = (Math.random() * (max - min) + min).toFixed(2);",
+							"  return amount.toString();",
+							"}",
+							"",
+							"const sellerAccounts = ['seller-acct-001','seller-acct-002','seller-acct-003','seller-acct-004','seller-acct-005','seller-acct-006','seller-acct-007','seller-acct-008','seller-acct-009','seller-acct-010'];",
+							"",
+							"const checkoutId = `chk-${randomString(4)}-${randomString(4)}-${randomString(4)}`;",
+							"const buyerId = `buyer-${randomString(8)}`;",
+							"const buyerEmail = `customer-${randomString(6)}@example.com`;",
+							"const paymentToken = `tok_${randomString(20)}`;",
+							"",
+							"const randomSellerIndex = Math.floor(Math.random() * sellerAccounts.length);",
+							"const paymentOrders = [{",
+							"  seller_account: sellerAccounts[randomSellerIndex],",
+							"  amount: randomAmount(10, 100),",
+							"  currency: 'USD',",
+							"  payment_order_id: `po-${randomString(4)}-${randomString(4)}-${randomString(4)}`",
+							"}];",
+							"",
+							"pm.variables.set('checkout_id', checkoutId);",
+							"pm.variables.set('buyer_id', buyerId);",
+							"pm.variables.set('buyer_email', buyerEmail);",
+							"pm.variables.set('payment_token', paymentToken);",
+							"pm.variables.set('payment_orders', JSON.stringify(paymentOrders));"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"checkout_id\": \"{{checkout_id}}\",\n  \"buyer_info\": {\n    \"user_id\": \"{{buyer_id}}\",\n    \"email\": \"{{buyer_email}}\"\n  },\n  \"credit_card_info\": {\n    \"payment_token\": \"{{payment_token}}\"\n  },\n  \"payment_orders\": {{payment_orders}},\n  \"simulate\": {\n    \"executor\": {\n      \"error\": true\n    }\n  }\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/v1/payments",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"v1",
+						"payments"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Error (Wallet)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"function randomString(length) {",
+							"  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';",
+							"  let result = '';",
+							"  for (let i = 0; i < length; i++) {",
+							"    result += chars.charAt(Math.floor(Math.random() * chars.length));",
+							"  }",
+							"  return result;",
+							"}",
+							"function randomAmount(min, max) {",
+							"  const amount = (Math.random() * (max - min) + min).toFixed(2);",
+							"  return amount.toString();",
+							"}",
+							"",
+							"const sellerAccounts = ['seller-acct-001','seller-acct-002','seller-acct-003','seller-acct-004','seller-acct-005','seller-acct-006','seller-acct-007','seller-acct-008','seller-acct-009','seller-acct-010'];",
+							"",
+							"const checkoutId = `chk-${randomString(4)}-${randomString(4)}-${randomString(4)}`;",
+							"const buyerId = `buyer-${randomString(8)}`;",
+							"const buyerEmail = `customer-${randomString(6)}@example.com`;",
+							"const paymentToken = `tok_${randomString(20)}`;",
+							"",
+							"const randomSellerIndex = Math.floor(Math.random() * sellerAccounts.length);",
+							"const paymentOrders = [{",
+							"  seller_account: sellerAccounts[randomSellerIndex],",
+							"  amount: randomAmount(10, 100),",
+							"  currency: 'USD',",
+							"  payment_order_id: `po-${randomString(4)}-${randomString(4)}-${randomString(4)}`",
+							"}];",
+							"",
+							"pm.variables.set('checkout_id', checkoutId);",
+							"pm.variables.set('buyer_id', buyerId);",
+							"pm.variables.set('buyer_email', buyerEmail);",
+							"pm.variables.set('payment_token', paymentToken);",
+							"pm.variables.set('payment_orders', JSON.stringify(paymentOrders));"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"checkout_id\": \"{{checkout_id}}\",\n  \"buyer_info\": {\n    \"user_id\": \"{{buyer_id}}\",\n    \"email\": \"{{buyer_email}}\"\n  },\n  \"credit_card_info\": {\n    \"payment_token\": \"{{payment_token}}\"\n  },\n  \"payment_orders\": {{payment_orders}},\n  \"simulate\": {\n    \"wallet\": {\n      \"error\": true\n    }\n  }\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/v1/payments",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"v1",
+						"payments"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PSP Business Failure (Random Error)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"function randomString(length) {",
+							"  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';",
+							"  let result = '';",
+							"  for (let i = 0; i < length; i++) {",
+							"    result += chars.charAt(Math.floor(Math.random() * chars.length));",
+							"  }",
+							"  return result;",
+							"}",
+							"function randomAmount(min, max) {",
+							"  const amount = (Math.random() * (max - min) + min).toFixed(2);",
+							"  return amount.toString();",
+							"}",
+							"",
+							"const sellerAccounts = ['seller-acct-001','seller-acct-002','seller-acct-003','seller-acct-004','seller-acct-005','seller-acct-006','seller-acct-007','seller-acct-008','seller-acct-009','seller-acct-010'];",
+							"",
+							"const checkoutId = `chk-${randomString(4)}-${randomString(4)}-${randomString(4)}`;",
+							"const buyerId = `buyer-${randomString(8)}`;",
+							"const buyerEmail = `customer-${randomString(6)}@example.com`;",
+							"const paymentToken = `tok_${randomString(20)}`;",
+							"",
+							"const randomSellerIndex = Math.floor(Math.random() * sellerAccounts.length);",
+							"const paymentOrders = [{",
+							"  seller_account: sellerAccounts[randomSellerIndex],",
+							"  amount: randomAmount(10, 100),",
+							"  currency: 'USD',",
+							"  payment_order_id: `po-${randomString(4)}-${randomString(4)}-${randomString(4)}`",
+							"}];",
+							"",
+							"pm.variables.set('checkout_id', checkoutId);",
+							"pm.variables.set('buyer_id', buyerId);",
+							"pm.variables.set('buyer_email', buyerEmail);",
+							"pm.variables.set('payment_token', paymentToken);",
+							"pm.variables.set('payment_orders', JSON.stringify(paymentOrders));"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"checkout_id\": \"{{checkout_id}}\",\n  \"buyer_info\": {\n    \"user_id\": \"{{buyer_id}}\",\n    \"email\": \"{{buyer_email}}\"\n  },\n  \"credit_card_info\": {\n    \"payment_token\": \"{{payment_token}}\"\n  },\n  \"payment_orders\": {{payment_orders}},\n  \"simulate\": {\n    \"psp\": {\n      \"error\": true\n    }\n  }\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/v1/payments",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"v1",
+						"payments"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PSP Server Error (500)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"function randomString(length) {",
+							"  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';",
+							"  let result = '';",
+							"  for (let i = 0; i < length; i++) {",
+							"    result += chars.charAt(Math.floor(Math.random() * chars.length));",
+							"  }",
+							"  return result;",
+							"}",
+							"function randomAmount(min, max) {",
+							"  const amount = (Math.random() * (max - min) + min).toFixed(2);",
+							"  return amount.toString();",
+							"}",
+							"",
+							"const sellerAccounts = ['seller-acct-001','seller-acct-002','seller-acct-003','seller-acct-004','seller-acct-005','seller-acct-006','seller-acct-007','seller-acct-008','seller-acct-009','seller-acct-010'];",
+							"",
+							"const checkoutId = `chk-${randomString(4)}-${randomString(4)}-${randomString(4)}`;",
+							"const buyerId = `buyer-${randomString(8)}`;",
+							"const buyerEmail = `customer-${randomString(6)}@example.com`;",
+							"const paymentToken = `tok_${randomString(20)}`;",
+							"",
+							"const randomSellerIndex = Math.floor(Math.random() * sellerAccounts.length);",
+							"const paymentOrders = [{",
+							"  seller_account: sellerAccounts[randomSellerIndex],",
+							"  amount: randomAmount(10, 100),",
+							"  currency: 'USD',",
+							"  payment_order_id: `po-${randomString(4)}-${randomString(4)}-${randomString(4)}`",
+							"}];",
+							"",
+							"pm.variables.set('checkout_id', checkoutId);",
+							"pm.variables.set('buyer_id', buyerId);",
+							"pm.variables.set('buyer_email', buyerEmail);",
+							"pm.variables.set('payment_token', paymentToken);",
+							"pm.variables.set('payment_orders', JSON.stringify(paymentOrders));"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"checkout_id\": \"{{checkout_id}}\",\n  \"buyer_info\": {\n    \"user_id\": \"{{buyer_id}}\",\n    \"email\": \"{{buyer_email}}\"\n  },\n  \"credit_card_info\": {\n    \"payment_token\": \"{{payment_token}}\"\n  },\n  \"payment_orders\": {{payment_orders}},\n  \"simulate\": {\n    \"psp\": {\n      \"server_error\": true\n    }\n  }\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/v1/payments",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"v1",
+						"payments"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Latency Only (Initializer)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"function randomString(length) {",
+							"  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';",
+							"  let result = '';",
+							"  for (let i = 0; i < length; i++) {",
+							"    result += chars.charAt(Math.floor(Math.random() * chars.length));",
+							"  }",
+							"  return result;",
+							"}",
+							"function randomAmount(min, max) {",
+							"  const amount = (Math.random() * (max - min) + min).toFixed(2);",
+							"  return amount.toString();",
+							"}",
+							"",
+							"const sellerAccounts = ['seller-acct-001','seller-acct-002','seller-acct-003','seller-acct-004','seller-acct-005','seller-acct-006','seller-acct-007','seller-acct-008','seller-acct-009','seller-acct-010'];",
+							"",
+							"const checkoutId = `chk-${randomString(4)}-${randomString(4)}-${randomString(4)}`;",
+							"const buyerId = `buyer-${randomString(8)}`;",
+							"const buyerEmail = `customer-${randomString(6)}@example.com`;",
+							"const paymentToken = `tok_${randomString(20)}`;",
+							"",
+							"const randomSellerIndex = Math.floor(Math.random() * sellerAccounts.length);",
+							"const paymentOrders = [{",
+							"  seller_account: sellerAccounts[randomSellerIndex],",
+							"  amount: randomAmount(10, 100),",
+							"  currency: 'USD',",
+							"  payment_order_id: `po-${randomString(4)}-${randomString(4)}-${randomString(4)}`",
+							"}];",
+							"",
+							"pm.variables.set('checkout_id', checkoutId);",
+							"pm.variables.set('buyer_id', buyerId);",
+							"pm.variables.set('buyer_email', buyerEmail);",
+							"pm.variables.set('payment_token', paymentToken);",
+							"pm.variables.set('payment_orders', JSON.stringify(paymentOrders));"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"checkout_id\": \"{{checkout_id}}\",\n  \"buyer_info\": {\n    \"user_id\": \"{{buyer_id}}\",\n    \"email\": \"{{buyer_email}}\"\n  },\n  \"credit_card_info\": {\n    \"payment_token\": \"{{payment_token}}\"\n  },\n  \"payment_orders\": {{payment_orders}},\n  \"simulate\": {\n    \"initializer\": {\n      \"latency\": 2\n    }\n  }\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/v1/payments",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"v1",
+						"payments"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Latency Only (Executor)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"function randomString(length) {",
+							"  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';",
+							"  let result = '';",
+							"  for (let i = 0; i < length; i++) {",
+							"    result += chars.charAt(Math.floor(Math.random() * chars.length));",
+							"  }",
+							"  return result;",
+							"}",
+							"function randomAmount(min, max) {",
+							"  const amount = (Math.random() * (max - min) + min).toFixed(2);",
+							"  return amount.toString();",
+							"}",
+							"",
+							"const sellerAccounts = ['seller-acct-001','seller-acct-002','seller-acct-003','seller-acct-004','seller-acct-005','seller-acct-006','seller-acct-007','seller-acct-008','seller-acct-009','seller-acct-010'];",
+							"",
+							"const checkoutId = `chk-${randomString(4)}-${randomString(4)}-${randomString(4)}`;",
+							"const buyerId = `buyer-${randomString(8)}`;",
+							"const buyerEmail = `customer-${randomString(6)}@example.com`;",
+							"const paymentToken = `tok_${randomString(20)}`;",
+							"",
+							"const randomSellerIndex = Math.floor(Math.random() * sellerAccounts.length);",
+							"const paymentOrders = [{",
+							"  seller_account: sellerAccounts[randomSellerIndex],",
+							"  amount: randomAmount(10, 100),",
+							"  currency: 'USD',",
+							"  payment_order_id: `po-${randomString(4)}-${randomString(4)}-${randomString(4)}`",
+							"}];",
+							"",
+							"pm.variables.set('checkout_id', checkoutId);",
+							"pm.variables.set('buyer_id', buyerId);",
+							"pm.variables.set('buyer_email', buyerEmail);",
+							"pm.variables.set('payment_token', paymentToken);",
+							"pm.variables.set('payment_orders', JSON.stringify(paymentOrders));"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"checkout_id\": \"{{checkout_id}}\",\n  \"buyer_info\": {\n    \"user_id\": \"{{buyer_id}}\",\n    \"email\": \"{{buyer_email}}\"\n  },\n  \"credit_card_info\": {\n    \"payment_token\": \"{{payment_token}}\"\n  },\n  \"payment_orders\": {{payment_orders}},\n  \"simulate\": {\n    \"executor\": {\n      \"latency\": 2\n    }\n  }\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/v1/payments",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"v1",
+						"payments"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Latency Only (Wallet)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"function randomString(length) {",
+							"  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';",
+							"  let result = '';",
+							"  for (let i = 0; i < length; i++) {",
+							"    result += chars.charAt(Math.floor(Math.random() * chars.length));",
+							"  }",
+							"  return result;",
+							"}",
+							"function randomAmount(min, max) {",
+							"  const amount = (Math.random() * (max - min) + min).toFixed(2);",
+							"  return amount.toString();",
+							"}",
+							"",
+							"const sellerAccounts = ['seller-acct-001','seller-acct-002','seller-acct-003','seller-acct-004','seller-acct-005','seller-acct-006','seller-acct-007','seller-acct-008','seller-acct-009','seller-acct-010'];",
+							"",
+							"const checkoutId = `chk-${randomString(4)}-${randomString(4)}-${randomString(4)}`;",
+							"const buyerId = `buyer-${randomString(8)}`;",
+							"const buyerEmail = `customer-${randomString(6)}@example.com`;",
+							"const paymentToken = `tok_${randomString(20)}`;",
+							"",
+							"const randomSellerIndex = Math.floor(Math.random() * sellerAccounts.length);",
+							"const paymentOrders = [{",
+							"  seller_account: sellerAccounts[randomSellerIndex],",
+							"  amount: randomAmount(10, 100),",
+							"  currency: 'USD',",
+							"  payment_order_id: `po-${randomString(4)}-${randomString(4)}-${randomString(4)}`",
+							"}];",
+							"",
+							"pm.variables.set('checkout_id', checkoutId);",
+							"pm.variables.set('buyer_id', buyerId);",
+							"pm.variables.set('buyer_email', buyerEmail);",
+							"pm.variables.set('payment_token', paymentToken);",
+							"pm.variables.set('payment_orders', JSON.stringify(paymentOrders));"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"checkout_id\": \"{{checkout_id}}\",\n  \"buyer_info\": {\n    \"user_id\": \"{{buyer_id}}\",\n    \"email\": \"{{buyer_email}}\"\n  },\n  \"credit_card_info\": {\n    \"payment_token\": \"{{payment_token}}\"\n  },\n  \"payment_orders\": {{payment_orders}},\n  \"simulate\": {\n    \"wallet\": {\n      \"latency\": 2\n    }\n  }\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/v1/payments",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"v1",
+						"payments"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
