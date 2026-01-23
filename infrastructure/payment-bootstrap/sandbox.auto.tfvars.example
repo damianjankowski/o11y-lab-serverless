@@ -1,0 +1,20 @@
+project_name = "o11y-lab"
+
+terraform_remote_state_bucket_name = "your-terraform-state-bucket"
+
+environment_variables_dynatrace_open_telemetry = {
+  AWS_LAMBDA_EXEC_WRAPPER              = "/opt/dynatrace"
+  DT_TENANT                            = "YOUR_DYNATRACE_TENANT"
+  DT_CLUSTER                           = "YOUR_DYNATRACE_CLUSTER_ID"
+  DT_CONNECTION_BASE_URL               = "https://your-tenant.live.dynatrace.com"
+  DT_CONNECTION_AUTH_TOKEN             = "YOUR_DYNATRACE_CONNECTION_AUTH_TOKEN"
+  DT_LOG_COLLECTION_AUTH_TOKEN         = "YOUR_DYNATRACE_LOG_COLLECTION_AUTH_TOKEN"
+  DT_OPEN_TELEMETRY_ENABLE_INTEGRATION = "true"
+}
+
+lambda_layers_arns = [
+  "arn:aws:lambda:eu-west-1:YOUR_ACCOUNT_ID:layer:Dynatrace_OneAgent_VERSION:1"
+]
+
+api_gateway_stage_name = "v1"
+log_retention          = 3

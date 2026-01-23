@@ -1,0 +1,7 @@
+aws_account_id = "YOUR_AWS_ACCOUNT_ID"
+aws_region     = "eu-west-1"
+
+deployment_region            = "eu-west-1"
+deployment_stack_name_prefix = "YOUR_STACK_PREFIX"
+dynatrace_user_name          = "dynatrace"
+
