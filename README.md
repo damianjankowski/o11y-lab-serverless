@@ -516,8 +516,6 @@ While this demo uses a simplified ledger model (Wallet table only), production p
 
 **Observability:**
 
-#TODO - sprawdzic queries
-
 In the context of retry strategies, observability might focuses on two key areas: **PSP Error Rates** (why retries happen) and **Dead Letter Queue (DLQ) Analysis** (when retries fail).
 
 **1. PSP Error Rate Analysis**
@@ -1156,8 +1154,6 @@ def log_business_event(
 
 <img src="screenshots/dashboard-biz.png" alt="Language of business">
 
-#TODO - jeszcze raz zastanowić się nad tym fragmentem.
-
 ## Defining business-aligned SLIs and SLOs
 
 Service Level Indicators (SLIs) should measure **what users actually experience**, not internal implementation details.  
@@ -1193,7 +1189,7 @@ These SLIs reflect the user’s immediate experience when interacting with the A
 
 - **Example SLI**: API request latency for `POST /payments`
 - **Measurement model**:
-  - **Good event**: request completed within the latency objective (e.g. ≤ 300 ms)
+  - **Good event**: request completed within the latency objective (e.g. ≤ 300 ms) **AND** response status code is not 5xx.
   - **Total events**: all valid payment initiation requests
 
 Latency SLIs are typically **derived from request-level telemetry** (e.g. HTTP server spans collected via distributed tracing), but the **SLI itself is defined as an event ratio**, not as raw trace data.
@@ -1203,17 +1199,15 @@ Latency SLIs are typically **derived from request-level telemetry** (e.g. HTTP s
 These SLIs capture whether the payment workflow ultimately completes successfully.  
 They reflect the **end-to-end outcome** of the system, not individual component behavior.
 
-### End-to-end processing latency SLI (Internal)
+### End-to-end processing latency SLI
 
-Since users do not synchronously wait for payment settlement, **end-to-end processing latency is treated as an internal SLI**.
+Since users do not synchronously wait for payment settlement, this is often treated as an internal metric. However, users **do** have an expectation of timeliness (e.g., receiving a confirmation within minutes).
 
 - **Measurement**: time from payment initiation to final settlement
-- **Purpose**:
-  - capacity planning
-  - detection of downstream degradation
-  - early warning signals before availability SLOs are impacted
+- **SLO Target**: 99% of payments settle within 2 minutes.
+- **Purpose**: Ensures that while the system is async, it doesn't degrade into "functionally unavailable" (e.g., taking 4 hours to process).
 
-Internal SLIs provide **engineering insight**, but they are **not used as user-facing SLOs**.
+Internal SLIs provide **engineering insight**, but limits represent the **user's tolerance for delay**.
 
 ### Payment success rate SLI (Availability)
 
@@ -1221,8 +1215,10 @@ The primary availability indicator for the payment platform is the **Payment Suc
 
 - **Measurement model**:
   - **Total events**: all payment checkout attempts that enter the system and reach a terminal state.
-  - **Good events**: payments that successfully complete settlement.
-  - **Excluded events**: business-level rejections (e.g., insufficient funds, invalid card data) are excluded, as they do not represent system failures.
+- **Measurement model**:
+  - **Good events**: valid payments that successfully complete settlement.
+  - **Total Valid Events**: `Total Requests` - `User/Business Errors`
+    We explicitly filter out invalid requests from the denominator. A user failing to pay because they have no money is not a system reliability failure.
 
 #### SLO definition
 
