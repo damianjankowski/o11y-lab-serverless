@@ -1,4 +1,4 @@
-# Serverless Unified Observability Done Right: I wrote a Tutorial so you Don't Have To!
+# Serverless Unified Observability Done Right
 
 ## Intro
 
