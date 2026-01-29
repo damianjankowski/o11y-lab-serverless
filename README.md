@@ -31,10 +31,7 @@ To ensure this tutorial reflects real-world complexity, I have implemented a Ser
 
 Note: While this architecture follows industry best practices, its primary purpose is to demonstrate observability instrumentation. It is a robust reference implementation, not a production-ready payment system.
 
-#TODO: screenshoty
-<img src="screenshots/dashboard-graph.png" alt="Service map graph in the Dynatrace dashboard">
-
-<img src="screenshots/dashboard-main.png" alt="The main dashboard in Dynatrace showing key service metrics">
+<img src="screenshots/dashboard.png" alt="Analyze the e2e serverless workflow">
 
 ## 4 Steps to Unified Observability
 
@@ -47,18 +44,9 @@ Unified observability doesn't happen all at once. It evolves in clear, intention
 | **3** | Business       | Did we make money? Is the business healthy? | Business events, conversion rates, revenue metrics, business KPIs    |
 | **4** | SDLC/Release   | What changed? Which deployment caused it?   | Release observability, deployment correlation, version tracking      |
 
-### The unified story
+This continuous feedback loop between engineering, operations, and business is what we call **Unified Observability**.
 
-This architecture is not layered by technology — it's layered by **questions**:
-
-1. **Infrastructure context** answers "where does the system actually run?"
-2. **Application instrumentation** answers "why did this transaction break?"
-3. **Business insights** answer "did it impact revenue?"
-4. **Release context** answers "which version caused the anomaly?"
-
-The goal is to have **one story** — a single context that connects infrastructure health, end-to-end distributed traces, business metrics, and release information. This continuous feedback loop between engineering, operations, and business is what we call **Unified Observability**.
-
-> **Key Insight**: Context is the most critical piece in modern observability. Without it, you're hunting through logs and guessing. With it, you have a story.
+> **Key Insight**: Context is the most critical piece in modern observability. Without it, you're hunting through logs and guessing.
 
 ## Observability lab - components
 
@@ -85,7 +73,7 @@ At this stage, the platform acts as a **money custodian** – while the money is
 
 ### Architecture
 
-<img src="screenshots/architecture-entry-point.png" alt="High-level architecture diagram of the payment processing flow">
+<img src="screenshots/o11y-lab-otel.png" alt="High-level architecture diagram of the payment processing flow">
 
 #### Architecture Overview
 
@@ -199,8 +187,6 @@ Table 2: Individual payment orders - DynamoDB PaymentOrder table (PK: `payment_o
   - `simulate.psp.server_error`: PSP unavailable (HTTP 500)
   - `simulate.psp.error_code`: Specific error (`INSUFFICIENT_FUNDS`, `CARD_DECLINED`, etc.)
 
-#TODO: zmień w całym tekście nagłówki na zgodne z Sentence case
-
 **3.3 Wallet Service (tracks seller entitlements)**
 
 - Triggered by messages from the `payment-results-queue`.
@@ -213,7 +199,7 @@ Table 2: Individual payment orders - DynamoDB PaymentOrder table (PK: `payment_o
 - Updates `ledger_updated` field (reserved for future double-entry bookkeeping).
 - Marks the checkout as complete (`is_payment_done = true`) in the `PaymentEvent` table.
 
-### 3.4 Reconciliation System (Critical for Financial Integrity)
+### 3.4 Reconciliation System
 
 **Purpose**: Ensures data consistency between internal services and external PSP by periodically comparing states.
 
@@ -240,7 +226,7 @@ Table 2: Individual payment orders - DynamoDB PaymentOrder table (PK: `payment_o
 - Dashboard tile showing daily reconciliation status (green/yellow/red)
 - Monitor reconciliation latency (how long it takes to identify issues)
 
-**Current Demo Status**: ⚠️ Not implemented (out of scope for observability demo)
+**Current Demo Status**: Not implemented (out of scope for observability demo)
 
 For production systems, implement reconciliation using:
 
@@ -530,7 +516,9 @@ While this demo uses a simplified ledger model (Wallet table only), production p
 
 **Observability:**
 
-In the context of retry strategies, observability focuses on two key areas: **PSP Error Rates** (why retries happen) and **Dead Letter Queue (DLQ) Analysis** (when retries fail).
+#TODO - sprawdzic queries
+
+In the context of retry strategies, observability might focuses on two key areas: **PSP Error Rates** (why retries happen) and **Dead Letter Queue (DLQ) Analysis** (when retries fail).
 
 **1. PSP Error Rate Analysis**
 
@@ -625,7 +613,7 @@ Let's kickstart this adventure - setting up the environment
 
 ## Infrastructure Bootstrapping Guide
 
-> **Quick Start**: Deploy the O11y Lab Serverless Payments infrastructure
+Deploy the O11y Lab Serverless Payments infrastructure
 
 ### Prerequisites
 
@@ -665,7 +653,7 @@ Let's kickstart this adventure - setting up the environment
 
 #### Step 0: Create Terraform State Bucket
 
-> ⚠️ **Important**: S3 bucket names must be **globally unique** across all AWS accounts.
+> **Important**: S3 bucket names must be **globally unique** across all AWS accounts.
 > You must customize the bucket name before running commands.
 
 **Option A: Use default naming (add your account ID)**
@@ -718,7 +706,7 @@ terraform {
 }
 ```
 
-> ⚠️ **Why this matters**: `payment-bootstrap` reads outputs from `environments-main` via remote state. Without S3 backend, the deployment will fail with "Unable to find remote state" error.
+> **Why this matters**: `payment-bootstrap` reads outputs from `environments-main` via remote state. Without S3 backend, the deployment will fail with "Unable to find remote state" error.
 
 #### Step 2: Configure `.env`
 
@@ -743,11 +731,11 @@ cp infrastructure/environments-main/environments-dev.auto.tfvars.example \
 Required values:
 
 ```hcl
-aws_account_id = "123456789012"          # Your AWS account ID
-aws_region     = "eu-west-1"             # Deployment region
+aws_account_id = "123456789012"          # AWS account ID
+aws_region     = "eu-west-1"             # deployment region
 
 deployment_region            = "eu-west-1"
-deployment_stack_name_prefix = "o11ylab" # Stack prefix for Dynatrace CF
+deployment_stack_name_prefix = "o11ylab" # stack prefix
 dynatrace_user_name          = "dynatrace"
 ```
 
@@ -838,8 +826,6 @@ In my case, I am using a Terraform module to deploy the necessary pre-requisites
 
 Metric ingest strategies include the default **poll-based** method, which periodically queries CloudWatch APIs, and the upcoming **push-based** stream for low-latency monitoring.
 
-#TODO screenshot.
-
 The onboarding process involves three main parts:
 
 1.  **AWS Side**: Creating an IAM user with permission to deploy CloudFormation (Done automatically!)
@@ -861,7 +847,6 @@ We need to set up a Service User that will act on behalf of the automated proces
 1.  Go to **[Dynatrace Account Management](https://myaccount.dynatrace.com/)**
 2.  Navigate to **Identity & access management** > **Policy management**.
 3.  Click **Create policy** and configure it:
-
     - **Policy name**: `CloudAdminWrite`
     - **Description**: "Allow management of cloud connections"
     - **Policy statement**: (Paste the code below)
@@ -926,6 +911,19 @@ Now for the grand finale. Let's connect everything together.
 Once the wizard completes, you will see your AWS connection status change to **Healthy**.
 <img src="screenshots/aws-onboarding-health.jpg" alt="Healthy AWS Connection status in Dynatrace"/>
 
+Finally we are reaching the point when Dynatrace is going to be used. Out components should be visible in new `Services` application.
+
+Let's take a look at AWS Lambda example:
+
+Lambda function overview:
+<img src="screenshots/services-overview.png" alt="The 'Services' application overview in Dynatrace">
+
+Logs are correlated with particular Lambda:
+<img src="screenshots/services-logs.png">
+
+Outbount calls:
+<img src="screenshots/services-calls.png">
+
 ## Instrumentation
 
 What is instrumentation?
@@ -936,7 +934,7 @@ OpenTelemetry gives developers two main ways to instrument the application:
 - **Code-based solution**: via APIs and SDKs for languages like C++, C#/.NET, Go, Java, JavaScript, Python, Ruby, Rust (a complete list of supported languages can be found on the [official website](https://opentelemetry.io/docs/languages/)).
 - **Zero-code solutions**: the best way to get started with instrumenting your application or if you cannot modify the source code.
 
-> ✅ **IMPORTANT**:
+> **IMPORTANT**:
 > You can use both solutions simultaneously.
 
 #### OpenTelemetry
@@ -993,22 +991,16 @@ Dynatrace offers quite good support for onboarding users. To retrieve all necess
 
 ## Cream de la creme... Confirmation!
 
-Speaking of confirmation, finally we are reaching the point when Dynatrace is going to be used. Lambda should be visible in new `Services` application.
+Speaking of confirmation, from that point you can easly navigate to `Distributed tracing` application
 
-<img src="screenshots/lambda-services-main-view.png" alt="The 'Services' application view in Dynatrace showing the Lambda function">
-
-From that point you can easly navigate to `Distributed tracing` application
-
-<img src="screenshots/lambda-services-view-traces.png" alt="Button to view traces for the selected service in Dynatrace">
-
-<img src="screenshots/lambda-dist-traces-lambda-view.png" alt="A distributed trace waterfall diagram in Dynatrace for a Lambda invocation">
+<img src="screenshots/distributed-tracing-app.png" alt="Distibuted Tracing application">
 
 ## Out-of-the-box solution
 
 When working with AWS Lambda functions and Dynatrace OneAgent Lambda Layer, it's important to understand how the automatic instrumentation works and how to enhance it for better observability.
 As I mentioned in the previous chapter, Dynatrace provides you with a dedicated AWS Lambda layer that contains the Dynatrace extension for AWS Lambda. OK, so what we are getting out of the box?
 
-<img src="screenshots/dynatrace-out-of-the-box.png" alt="Dynatrace out of the box">
+<img src="screenshots/trace.png" alt="Dynatrace out of the box">
 
 ### What You Get Automatically
 
@@ -1081,8 +1073,6 @@ So far we focused on different observability pillars and how to implement them i
 - **System observability** explains what is technically broken and why.
 - **Business observability** explains why it matters to the business.
 
-The key mechanism linking both in SRE practice is **Service Level Objectives (SLOs)** — quantifiable reliability targets that serve as a common language between engineering and business stakeholders. When combined with tools like OpenTelemetry plus analytics platforms (e.g., Dynatrace), teams can directly correlate technical signals (errors, latency, cold starts) with business impact (lost revenue, failed signups).
-
 ### Business event logging pattern
 
 **Purpose**: Bridge technical traces with business metrics for multi-stakeholder observability.
@@ -1132,7 +1122,6 @@ def log_business_event(
 
 **Benefits**:
 
-- User-centric SLIs and SLOs. The pattern enables event-based SLIs that directly reflect the user journey rather than infrastructure behavior.
 - Clear separation of business and technical signals. Business events are emitted intentionally and explicitly, instead of being inferred from low-level traces or logs.
 - End-to-end visibility. The stage-based event taxonomy models the full lifecycle of a payment, from request to settlement.
 - Trace-to-business correlation. Business events are automatically correlated with distributed traces through ingestion-time enrichment.
@@ -1165,6 +1154,10 @@ def log_business_event(
 }
 ```
 
+<img src="screenshots/dashboard-biz.png" alt="Language of business">
+
+#TODO - jeszcze raz zastanowić się nad tym fragmentem.
+
 ## Defining business-aligned SLIs and SLOs
 
 Service Level Indicators (SLIs) should measure **what users actually experience**, not internal implementation details.  
@@ -1192,8 +1185,9 @@ Because users do not wait for settlement synchronously, **reliability must be me
 ### Types of SLIs in an asynchronous payment system
 
 This architecture naturally leads to **two distinct categories of SLIs**.
+This SLI follows the **Good / Total Events pattern** recommended by Google SRE.
 
-#### User-facing API SLIs (Synchronous)
+#### User-facing API SLIs
 
 These SLIs reflect the user’s immediate experience when interacting with the API.
 
@@ -1209,28 +1203,6 @@ Latency SLIs are typically **derived from request-level telemetry** (e.g. HTTP s
 These SLIs capture whether the payment workflow ultimately completes successfully.  
 They reflect the **end-to-end outcome** of the system, not individual component behavior.
 
-### Payment success rate SLI (Availability)
-
-The primary availability indicator for the payment platform is the **Payment Success Rate**.  
-This SLI follows the **Good / Total Events pattern** recommended by Google SRE.
-
-- **Total events**  
-  All payment checkout attempts that enter the system and reach a terminal state.
-
-- **Good events**  
-  Payments that successfully complete settlement.
-
-- **Excluded events**  
-  Business-level rejections (e.g., insufficient funds, invalid card data) are excluded, as they do not represent system failures.
-
-#### SLO definition
-
-| SLO Target | Evaluation Window | Error Budget |
-| ---------: | ----------------- | ------------ |
-|      99.5% | 30-day rolling    | 0.5%         |
-
-A 99.5% SLO means that **no more than 0.5% of valid payment attempts may fail due to system issues** within the evaluation window.
-
 ### End-to-end processing latency SLI (Internal)
 
 Since users do not synchronously wait for payment settlement, **end-to-end processing latency is treated as an internal SLI**.
@@ -1243,7 +1215,24 @@ Since users do not synchronously wait for payment settlement, **end-to-end proce
 
 Internal SLIs provide **engineering insight**, but they are **not used as user-facing SLOs**.
 
-### Business conversion rate (KPI, not an SLO)
+### Payment success rate SLI (Availability)
+
+The primary availability indicator for the payment platform is the **Payment Success Rate**.
+
+- **Measurement model**:
+  - **Total events**: all payment checkout attempts that enter the system and reach a terminal state.
+  - **Good events**: payments that successfully complete settlement.
+  - **Excluded events**: business-level rejections (e.g., insufficient funds, invalid card data) are excluded, as they do not represent system failures.
+
+#### SLO definition
+
+| SLO Target | Evaluation Window | Error Budget |
+| ---------: | ----------------- | ------------ |
+|      99.5% | 30-day rolling    | 0.5%         |
+
+A 99.5% SLO means that **no more than 0.5% of valid payment attempts may fail due to system issues** within the evaluation window.
+
+### Business conversion rate (KPI)
 
 The **Business Conversion Rate** measures the percentage of initiated payments that successfully settle.
 
@@ -1276,86 +1265,50 @@ This approach ensures a **healthy balance between feature velocity and system re
 
 **Note**: These structured logs can be extracted as Dynatrace Business Events via [OpenPipeline](https://docs.dynatrace.com/docs/platform/openpipeline/use-cases/business-events) for advanced business analytics and SLO monitoring.
 
-## Release Observability
+## Release observability
 
-We have visibility into infrastructure, traces, and business data. But there is one missing piece: **change**.
+Infrastructure, traces, and business metrics provide operational visibility — but without **change context**, root cause analysis remains incomplete.
 
-When things break, the first question is always: _"What changed?"_
+When incidents occur, the first diagnostic question is: _"What changed?"_
 
-This is where Release Observability comes in — answering **who** deployed **what**, **where**, and **when**, and correlating that with failures, latency spikes, and business impact.
+Release observability addresses this by capturing **who** deployed **what**, **where**, and **when**, and correlating deployment events with anomalies, latency degradation, and business impact.
 
 ### Why release context matters
 
-In serverless architectures, deployments happen frequently. A Lambda function might be updated multiple times per day. Without release context, you're left asking:
+Deployment frequency is high. A Lambda function may be updated multiple times per day. Without release telemetry, operators are forced to manually investigate:
 
-- "Did this error exist before the last deployment?"
-- "Which version introduced this latency regression?"
-- "Is this a new bug or existing behavior?"
+- Whether an error predates the most recent deployment
+- Which version introduced a latency regression
+- Whether observed behavior is a new defect or existing condition
 
-Release observability shifts the conversation from **"What broke?"** to **"Which version caused it?"** — significantly reducing investigation time.
+Release observability shifts the diagnostic model from **"What broke?"** to **"Which version introduced the failure?"** — directly reducing Mean Time to Resolution (MTTR).
 
-### How it works in Dynatrace
+<img src="screenshots/sdlc.png" alt="Release obserbability">
 
-Dynatrace answers this by ingesting SDLC events directly from your CI/CD pipeline and correlating them with runtime behavior and business metrics.
+### SDLC events in Dynatrace
 
-**Event Types:**
+Dynatrace ingests [Software Development Lifecycle (SDLC) events](https://docs.dynatrace.com/docs/discover-dynatrace/references/semantic-dictionary/model/sdlc-events) that represent discrete stages in the software delivery process. These events follow a semantic model with consistent attribute namespaces:
 
-| Event Type          | Purpose                                  | Source               |
-| ------------------- | ---------------------------------------- | -------------------- |
-| `CUSTOM_DEPLOYMENT` | Marks a deployment event                 | CI/CD pipeline       |
-| `CUSTOM_ANNOTATION` | Adds context (e.g., commit hash, author) | Pipeline or manual   |
-| Version metadata    | Tracks function versions                 | Lambda function tags |
+| Namespace         | Purpose                                 | Example Attributes                                                              |
+| ----------------- | --------------------------------------- | ------------------------------------------------------------------------------- |
+| `cicd.pipeline`   | CI/CD pipeline execution tracking       | `cicd.pipeline.id`, `cicd.pipeline.run.id`, `cicd.pipeline.run.outcome`         |
+| `cicd.deployment` | Deployment lifecycle (started/finished) | `cicd.deployment.id`, `cicd.deployment.status`, `cicd.deployment.release_stage` |
+| `artifact`        | Build artifact identification           | `artifact.id`, `artifact.name`, `artifact.version`                              |
+| `vcs`             | Version control context                 | `vcs.ref.base.name`, `vcs.ref.base.revision`, `vcs.repository.url.full`         |
 
-**Correlation Capabilities:**
+SDLC events are classified by `event.type` (e.g., `deployment`, `build`, `run`) and `event.status` (e.g., `started`, `finished`), enabling precise lifecycle tracking.
 
-- **Anomaly → Deployment**: When an anomaly is detected (e.g., error rate spike), Dynatrace can immediately point to the deployment that introduced the change
-- **Business Impact → Version**: Correlate a drop in conversion rate with a specific Lambda version
-- **Latency Regression → Release**: Identify which release introduced a performance degradation
+**Correlation Logic:**
 
-### Implementation approach
+| Telemetry Signal       | Attribution Key                                                           |
+| ---------------------- | ------------------------------------------------------------------------- |
+| **Anomaly Detection**  | `cicd.deployment.id` — Correlates failure to specific deployment          |
+| **Business KPI Drop**  | `artifact.version` — Identifies active software version                   |
+| **Latency Regression** | `vcs.ref.base.revision` — Narrows investigation to the introducing commit |
 
-**Option 1: Dynatrace Events API v2**
+### The observability feedback loop
 
-Send deployment events from your CI/CD pipeline:
-
-```bash
-curl -X POST "https://{your-environment}.live.dynatrace.com/api/v2/events/ingest" \
-  -H "Authorization: Api-Token {your-token}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "eventType": "CUSTOM_DEPLOYMENT",
-    "title": "Payment Executor Lambda Deployed",
-    "entitySelector": "type(AWS_LAMBDA_FUNCTION),entityName.equals(o11y-lab-payments-executor)",
-    "properties": {
-      "version": "1.2.3",
-      "commit": "abc123def",
-      "author": "damian.jankowski",
-      "pipeline": "GitHub Actions"
-    }
-  }'
-```
-
-**Option 2: GitHub Actions Integration**
-
-Add to your deployment workflow:
-
-```yaml
-- name: Notify Dynatrace of Deployment
-  uses: dynatrace-oss/dynatrace-github-action@v8
-  with:
-    url: ${{ secrets.DT_URL }}
-    token: ${{ secrets.DT_TOKEN }}
-    event-type: CUSTOM_DEPLOYMENT
-    entity-selector: type(AWS_LAMBDA_FUNCTION),tag(project:o11y-lab)
-    properties: |
-      version=${{ github.sha }}
-      author=${{ github.actor }}
-      branch=${{ github.ref_name }}
-```
-
-### Closing the loop
-
-With release observability in place, you complete the unified observability feedback loop:
+Release observability completes the SRE feedback loop by linking runtime signals to deployment context:
 
 ```mermaid
 flowchart LR
@@ -1366,14 +1319,6 @@ flowchart LR
     Fix --> Deploy
 ```
 
-This creates **continuous feedback** between engineering, operations, and business:
+This enables **closed-loop operational feedback** across stakeholders.
 
-- **Engineering** knows which code changes caused issues
-- **Operations** can quickly identify problematic deployments
-- **Business** understands release velocity impact on KPIs
-
-> **Key Takeaway**: Release observability transforms debugging from "What broke?" to "Which deployment broke it and why?" — turning hours of investigation into minutes.
-
-## Summary
-
-> Well-defined SLIs focus on user experience, SLOs set clear reliability expectations, and error budgets turn reliability into an explicit engineering decision-making mechanism.
+> **Key takeaway**: Release observability transforms incident response from "What broke?" to "Which deployment introduced the failure, and what changed?" — reducing investigation time from hours to minutes.
