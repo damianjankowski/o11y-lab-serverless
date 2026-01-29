@@ -14,7 +14,7 @@ But nowadays observability must bridge the gap between the technical and the bus
 - **Is the business process efficient?**
 - **Is it generating value?**
 
-In a cloud-native world, where serverless architectures are gaining popularity, these questions become even more crucial. Without proper design and observability, the advantages of serverless can quickly become pitfalls, resulting in increased costs, degraded performance, security vulnerabilities, and complex debugging scenarios.
+In a cloud-native world, these questions are even more critical. Without proper observability, serverless benefits quickly turn into headaches—high costs, tricky debugging, and valid performance concerns.
 
 #### The Challenge
 
@@ -925,7 +925,7 @@ Outbount calls:
 ## Instrumentation
 
 What is instrumentation?
-Instrumentation refers to the process of embedding mechanisms in an application to collect telemetry data such as traces, metrics, and logs. Modern, distributed applications can be complex to debug, and frameworks like OpenTelemetry address this by standardising data collection across various services and languages.
+Instrumentation is simply about hooking up your code to collect data (traces, metrics, logs). In distributed systems, this is non-negotiable, and OpenTelemetry has become the standard to do it without vendor lock-in.
 
 OpenTelemetry gives developers two main ways to instrument the application:
 
@@ -1002,7 +1002,7 @@ As I mentioned in the previous chapter, Dynatrace provides you with a dedicated 
 
 ### What You Get Automatically
 
-Out of the box, after attaching the Dynatrace OneAgent Lambda Layer to your function, you gain immediate visibility into AWS Lambda executions **without writing a single line of code**. This automatic instrumentation leverages OpenTelemetry standards and integrates seamlessly with the Dynatrace backend to deliver essential observability features.
+By attaching the Dynatrace OneAgent Lambda Layer, you get visibility into Lambda executions right away, without manual code changes. It handles the OpenTelemetry instrumentation for you and streams data to the Dynatrace backend.
 
 **Automatic Trace Collection:**
 
@@ -1068,8 +1068,8 @@ So far we focused on different observability pillars and how to implement them i
 
 #### How they work together
 
-- **System observability** explains what is technically broken and why.
-- **Business observability** explains why it matters to the business.
+- **System observability** tells you something is broken.
+- **Business observability** tells you how much money you're losing because of it.
 
 ### Business event logging pattern
 
@@ -1317,4 +1317,4 @@ flowchart LR
 
 This enables **closed-loop operational feedback** across stakeholders.
 
-> **Key takeaway**: Release observability transforms incident response from "What broke?" to "Which deployment introduced the failure, and what changed?" — reducing investigation time from hours to minutes.
+> **Key takeaway**: Release observability lets you skip "What broke?" and go straight to "Which deployment caused this?"
